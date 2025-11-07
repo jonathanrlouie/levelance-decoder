@@ -185,7 +185,7 @@ impl TryFrom<char> for Letter {
 pub fn parse(input: &str) -> Result<LevelanceChunks, String> {
     let input = input.replace(".", "");
     let strlen = input.len();
-    if strlen <= 5 {
+    if strlen < 5 {
         return Err(format!(
             "Length of input {} was too short to be a Levelance string",
             input
