@@ -135,7 +135,7 @@ impl Letter {
             Letter::R => *num += rev_pos + len,
             Letter::S => *num += rev_pos - len,
             Letter::T => *num += pos + 1,
-            Letter::U => *num = *num + (rev_pos - len) + *num,
+            Letter::U => *num = (rev_pos - len) + *num,
             Letter::V => *num -= 7,
             Letter::W => {
                 *num += 1;
@@ -394,6 +394,161 @@ mod tests {
     #[test]
     fn test_NAN() {
         assert_eq!("5", decode("LPSNANLP").unwrap());
+    }
+
+    #[test]
+    fn test_BBO() {
+        assert_eq!("3", decode("LPSBBOLP").unwrap());
+    }
+
+    #[test]
+    fn test_AAO() {
+        assert_eq!("1", decode("LPSAAOLP").unwrap());
+    }
+
+    #[test]
+    fn test_GOB() {
+        assert_eq!("3", decode("LPSGOBLP").unwrap());
+    }
+
+    #[test]
+    fn test_PAN() {
+        assert_eq!("6", decode("LPSPANLP").unwrap());
+    }
+
+    #[test]
+    fn test_NGP() {
+        assert_eq!("8", decode("LPSNGPLP").unwrap());
+    }
+
+    #[test]
+    fn test_BPB() {
+        assert_eq!("2", decode("LPSBPBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BPQ() {
+        assert_eq!("1", decode("LPSBPQLP").unwrap());
+    }
+
+    #[test]
+    fn test_QGB() {
+        assert_eq!("2", decode("LPSQGBLP").unwrap());
+    }
+
+    #[test]
+    fn test_RAR() {
+        assert_eq!("1", decode("LPSRARLP").unwrap());
+    }
+
+    #[test]
+    fn test_SAS() {
+        assert_eq!("1", decode("LPSSASLP").unwrap());
+    }
+
+    #[test]
+    fn test_AAR() {
+        assert_eq!("1", decode("LPSAARLP").unwrap());
+    }
+
+    #[test]
+    fn test_BBT() {
+        assert_eq!("4", decode("LPSBBTLP").unwrap());
+    }
+
+    #[test]
+    fn test_BTB() {
+        assert_eq!("3", decode("LPSBTBLP").unwrap());
+    }
+
+    #[test]
+    fn test_TBB() {
+        assert_eq!("2", decode("LPSTBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_ABU() {
+        assert_eq!("6", decode("LPSABULP").unwrap());
+    }
+
+    #[test]
+    fn test_NUB() {
+        assert_eq!("4", decode("LPSNUBLP").unwrap());
+    }
+
+    #[test]
+    fn test_GNV() {
+        assert_eq!("0", decode("LPSGNVLP").unwrap());
+    }
+
+    #[test]
+    fn test_WWB() {
+        assert_eq!("2", decode("LPSWWBLP").unwrap());
+    }
+
+    #[test]
+    fn test_XXB() {
+        assert_eq!("2", decode("LPSXXBLP").unwrap());
+    }
+
+    #[test]
+    fn test_XAX() {
+        assert_eq!("5", decode("LPSXAXLP").unwrap());
+    }
+
+    #[test]
+    fn test_XBB() {
+        assert_eq!("2", decode("LPSXBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_XXA() {
+        assert_eq!("5", decode("LPSXXALP").unwrap());
+    }
+
+    #[test]
+    fn test_WWA() {
+        assert_eq!("3", decode("LPSWWALP").unwrap());
+    }
+
+    #[test]
+    fn test_WAB() {
+        assert_eq!("7", decode("LPSWABLP").unwrap());
+    }
+
+    #[test]
+    fn test_WXB() {
+        assert_eq!("7", decode("LPSWXBLP").unwrap());
+    }
+
+    #[test]
+    fn test_GNY() {
+        assert_eq!("0", decode("LPSGNYLP").unwrap());
+    }
+
+    #[test]
+    fn test_YYN() {
+        assert_eq!("2", decode("LPSYYNLP").unwrap());
+    }
+
+    #[test]
+    fn test_AYY() {
+        assert_eq!("9", decode("LPSAYYLP").unwrap());
+    }
+
+    #[test]
+    fn test_YVA() {
+        assert_eq!("3", decode("LPSYVALP").unwrap());
+    }
+
+    #[test]
+    fn test_GNZ() {
+        assert_eq!("0", decode("LPSGNZLP").unwrap());
+    }
+
+    #[test]
+    fn test_ZZZ() {
+        assert_eq!("0", decode("LPSZZZLP").unwrap());
     }
 
     #[test]
