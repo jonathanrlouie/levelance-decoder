@@ -12,13 +12,6 @@ struct Args {
 fn main() -> Result<(), String> {
     let args = Args::parse();
     let chunks = levelance::decode(&args.input)?;
-    println!(
-        "{:?}",
-        chunks
-            .into_iter()
-            .map(|i| i.to_string())
-            .collect::<Vec<String>>()
-            .join("")
-    );
+    println!("{}", chunks);
     Ok(())
 }

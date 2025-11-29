@@ -9,31 +9,42 @@ impl LevelanceChunks {
         Self { chunks, len }
     }
 
-    pub fn decode(&self) -> Vec<i32> {
+    pub fn decode(&self) -> Vec<String> {
         self.chunks
             .iter()
             .map(|chunk| chunk.decode(self.len))
-            .collect::<Vec<i32>>()
+            .collect::<Vec<String>>()
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct Chunk([Letter; 3]);
+// boolean field indicates if chunk is preceded by a dot
+enum Chunk {
+    NoDot([Letter; 3]),
+    WithDot(Option<[Letter; 3]>),
+}
+
+fn decode_letters(letters: &[Letter; 3], len: usize) -> i32 {
+    let mut num = 0i32;
+    let transform_0 = letters[0].decode(&mut num, 0, len as i32);
+    let transform_1 = letters[1].decode(&mut num, 1, len as i32);
+    let transform_2 = letters[2].decode(&mut num, 2, len as i32);
+    let is_even = num % 2 == 0;
+    apply_transform(&mut num, is_even, transform_0);
+    apply_transform(&mut num, is_even, transform_1);
+    apply_transform(&mut num, is_even, transform_2);
+    num %= 10;
+    num.abs()
+}
 
 impl Chunk {
     // len is the length of the full string, minus dots
-    fn decode(&self, len: usize) -> i32 {
-        let letters = &self.0;
-        let mut num = 0i32;
-        let transform_0 = letters[0].decode(&mut num, 0, len as i32);
-        let transform_1 = letters[1].decode(&mut num, 1, len as i32);
-        let transform_2 = letters[2].decode(&mut num, 2, len as i32);
-        let is_even = num % 2 == 0;
-        apply_transform(&mut num, is_even, transform_0);
-        apply_transform(&mut num, is_even, transform_1);
-        apply_transform(&mut num, is_even, transform_2);
-        num %= 10;
-        num.abs()
+    fn decode(&self, len: usize) -> String {
+        match self {
+            Chunk::NoDot(letters) => decode_letters(letters, len).to_string(),
+            Chunk::WithDot(None) => ".".to_string(),
+            Chunk::WithDot(Some(letters)) => format!(".{}", decode_letters(letters, len)),
+        }
     }
 }
 
@@ -183,8 +194,8 @@ impl TryFrom<char> for Letter {
 }
 
 pub fn parse(input: &str) -> Result<LevelanceChunks, String> {
-    let input = input.replace(".", "");
-    let strlen = input.len();
+    let input_stripped = input.replace(".", "");
+    let strlen = input_stripped.len();
     if strlen < 5 {
         return Err(format!(
             "Length of input {} was too short to be a Levelance string",
@@ -199,28 +210,219 @@ pub fn parse(input: &str) -> Result<LevelanceChunks, String> {
         ));
     }
     let levelance_str = &input[3..end_idx_minus_1];
-    if !levelance_str.len().is_multiple_of(3) {
-        return Err(format!(
-            "Levelance string {} is not a valid Levelance string because its length is not divisible by 3",
-            levelance_str
-        ));
-    }
-    let mut letter_buf: [char; 3] = ['\0', '\0', '\0'];
-    let mut chunks = vec![];
-    for (idx, c) in levelance_str.char_indices() {
-        let letter_idx = idx % 3;
-        letter_buf[letter_idx] = c;
-        if letter_idx == 2 {
-            let letter_0 = letter_buf[0].try_into()?;
-            let letter_1 = letter_buf[1].try_into()?;
-            let letter_2 = letter_buf[2].try_into()?;
-            chunks.push(Chunk([letter_0, letter_1, letter_2]));
+    let validations = levelance_str.split(".").map(|substr| {
+        if !substr.len().is_multiple_of(3) {
+            Err(format!(
+                "Levelance substring {} is not a valid Levelance substring because its length is not divisible by 3",
+                substr
+            ))
+        } else {
+            Ok(())
         }
+    }).collect::<Vec<Result<(), String>>>();
+    if !validations.clone().into_iter().all(|res| res.is_ok()) {
+        let mut err: String = String::new();
+        for validation in validations {
+            match validation {
+                Ok(_) => (),
+                Err(e) => err = format!("{}{}", err, e),
+            }
+        }
+        return Err(err);
+    }
+    let mut letter_buf: Vec<char> = Vec::new();
+    let mut chunks = vec![];
+    let mut has_dot = false;
+    for c in levelance_str.chars() {
+        if c == '.' && !has_dot {
+            has_dot = true;
+        } else if c == '.' && has_dot {
+            chunks.push(Chunk::WithDot(None))
+        } else {
+            letter_buf.push(c);
+            if letter_buf.len() == 3 {
+                let letter_0 = letter_buf[0].try_into()?;
+                let letter_1 = letter_buf[1].try_into()?;
+                let letter_2 = letter_buf[2].try_into()?;
+                if has_dot {
+                    chunks.push(Chunk::WithDot(Some([letter_0, letter_1, letter_2])));
+                } else {
+                    chunks.push(Chunk::NoDot([letter_0, letter_1, letter_2]));
+                }
+                letter_buf = Vec::new();
+                has_dot = false;
+            }
+        }
+    }
+    if has_dot {
+        chunks.push(Chunk::WithDot(None))
     }
     Ok(LevelanceChunks::new(chunks, strlen))
 }
 
-pub fn decode(input: &str) -> Result<Vec<i32>, String> {
+pub fn decode(input: &str) -> Result<String, String> {
     let chunks = parse(input)?;
-    Ok(chunks.decode())
+    let decoded: Vec<String> = chunks.decode();
+    Ok(decoded.join("").to_string())
+}
+
+#[cfg(test)]
+#[allow(non_snake_case)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_AAA() {
+        assert_eq!("3", decode("LPSAAALP").unwrap());
+    }
+
+    #[test]
+    fn test_AXW() {
+        assert_eq!("4", decode("LPSAXWLP").unwrap());
+    }
+
+    #[test]
+    fn test_BBB() {
+        assert_eq!("0", decode("LPSBBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BGB() {
+        assert_eq!("5", decode("LPSBGBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BBC() {
+        assert_eq!("1", decode("LPSBBCLP").unwrap());
+    }
+
+    #[test]
+    fn test_ADB() {
+        assert_eq!("2", decode("LPSADBLP").unwrap());
+    }
+
+    #[test]
+    fn test_GDC() {
+        assert_eq!("9", decode("LPSGDCLP").unwrap());
+    }
+
+    #[test]
+    fn test_AAE() {
+        assert_eq!("4", decode("LPSAAELP").unwrap());
+    }
+
+    #[test]
+    fn test_GAE() {
+        assert_eq!("6", decode("LPSGAELP").unwrap());
+    }
+
+    #[test]
+    fn test_FBB() {
+        assert_eq!("1", decode("LPSFBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BFB() {
+        assert_eq!("1", decode("LPSBFBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BHA() {
+        assert_eq!("6", decode("LPSBHALP").unwrap());
+    }
+
+    #[test]
+    fn test_BHH() {
+        assert_eq!("5", decode("LPSBHHLP").unwrap());
+    }
+
+    #[test]
+    fn test_GAH() {
+        assert_eq!("5", decode("LPSGAHLP").unwrap());
+    }
+
+    #[test]
+    fn test_IBB() {
+        assert_eq!("1", decode("LPSIBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BIG() {
+        assert_eq!("7", decode("LPSBIGLP").unwrap());
+    }
+
+    #[test]
+    fn test_BBI() {
+        assert_eq!("3", decode("LPSBBILP").unwrap());
+    }
+
+    #[test]
+    fn test_JJJ() {
+        assert_eq!("4", decode("LPSJJJLP").unwrap());
+    }
+
+    #[test]
+    fn test_JJJBBB() {
+        assert_eq!("30", decode("LPSJJJBBBLP").unwrap());
+    }
+
+    #[test]
+    fn test_KJB() {
+        assert_eq!("0", decode("LPSKJBLP").unwrap());
+    }
+
+    #[test]
+    fn test_AKB() {
+        assert_eq!("7", decode("LPSAKBLP").unwrap());
+    }
+
+    #[test]
+    fn test_BAL() {
+        assert_eq!("4", decode("LPSBALLP").unwrap());
+    }
+
+    #[test]
+    fn test_AAM() {
+        assert_eq!("6", decode("LPSAAMLP").unwrap());
+    }
+
+    #[test]
+    fn test_AAN() {
+        assert_eq!("4", decode("LPSAANLP").unwrap());
+    }
+
+    #[test]
+    fn test_NAN() {
+        assert_eq!("5", decode("LPSNANLP").unwrap());
+    }
+
+    #[test]
+    fn test_empty() {
+        assert_eq!("", decode("LPSLP").unwrap());
+    }
+
+    #[test]
+    fn test_empty_with_dots() {
+        assert_eq!("...", decode("LPS...LP").unwrap());
+    }
+
+    #[test]
+    fn test_empty_with_dot() {
+        assert_eq!(".", decode("LPS.LP").unwrap());
+    }
+
+    #[test]
+    fn test_AAA_with_dots() {
+        assert_eq!(".3.", decode("LPS.AAA.LP").unwrap());
+    }
+
+    #[test]
+    fn test_AAA_with_extra_dots() {
+        assert_eq!(".3..", decode("LPS.AAA..LP").unwrap());
+    }
+
+    #[test]
+    fn test_AAA_dot_BBB() {
+        assert_eq!("3.0", decode("LPSAAA.BBBLP").unwrap());
+    }
 }
