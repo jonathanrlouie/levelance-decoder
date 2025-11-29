@@ -580,4 +580,9 @@ mod tests {
     fn test_AAA_dot_BBB() {
         assert_eq!("3.0", decode("LPSAAA.BBBLP").unwrap());
     }
+
+    #[test]
+    fn test_hello_with_dots() {
+        assert_eq!("8.5.12.12.15", decode("LPSGNA.GBB.ABBNBB.ABBNBB.ABBGBBLP").unwrap());
+    }
 }
